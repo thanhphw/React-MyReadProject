@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from "prop-types";
 
 const Book = ({ book, onChangeShelf }) => {
+    const { title, authors = [], imageLinks, shelf } = book;
+    const thumbnail = imageLinks ? imageLinks.thumbnail : '';
+
     return (
         <div className="book">
             <div className="book-top">
@@ -10,12 +13,15 @@ const Book = ({ book, onChangeShelf }) => {
                     style={{
                         width: 128,
                         height: 193,
-                        backgroundImage: `url(${book.imageLinks.thumbnail})`,
+                        backgroundImage: `url(${thumbnail})`
                     }}
                 ></div>
                 <div className="book-shelf-changer">
-                    <select value={book.shelf} onChange={(e) => onChangeShelf(book, e.target.value)}>
-                        <option value="none" disabled>
+                    <select
+                        value={shelf}
+                        onChange={(e) => onChangeShelf(book, e.target.value)}
+                    >
+                        <option value="move" disabled>
                             Move to...
                         </option>
                         <option value="currentlyReading">Currently Reading</option>
@@ -25,15 +31,21 @@ const Book = ({ book, onChangeShelf }) => {
                     </select>
                 </div>
             </div>
-            <div className="book-title">{book.title}</div>
-            <div className="book-authors">{book.authors.join(', ')}</div>
+            <div className="book-title">{title}</div>
+            <div className="book-authors">{authors.join(', ')}</div>
         </div>
     );
 };
 
 Book.propTypes = {
-    book: PropTypes.object.isRequired,
-    onChangeShelf: PropTypes.func.isRequired,
+    book: PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string,
+        authors: PropTypes.arrayOf(PropTypes.string),
+        imageLinks: PropTypes.object,
+        shelf: PropTypes.string
+    }).isRequired,
+    onChangeShelf: PropTypes.func.isRequired
 };
 
 export default Book;

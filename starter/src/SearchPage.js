@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as BooksAPI from './BooksAPI';
 import Book from './Book';
@@ -8,35 +8,46 @@ const SearchPage = ({ existingBooks }) => {
     const [query, setQuery] = useState('');
     const [searchedBooks, setSearchedBooks] = useState([]);
 
-    const updateQuery = (query) => {
-        setQuery(query);
-        if (query) {
+    useEffect(() => {
+        let isMounted = true;
+        if (query.trim()) {
             BooksAPI.search(query, 100).then((data) => {
-                if (data.error) {
+                if (isMounted) {
+                    if (data.error) {
+                        setSearchedBooks([]);
+                        console.error('Search returned no results');
+                    } else {
+                        const booksWithShelves = data.map((book) => {
+                            const existingBook = existingBooks.find((b) => b.id === book.id);
+                            book.shelf = existingBook ? existingBook.shelf : 'none';
+                            return book;
+                        });
+                        setSearchedBooks(booksWithShelves);
+                    }
+                }
+            }).catch((error) => {
+                console.error('Error during search:', error);
+                if (isMounted) {
                     setSearchedBooks([]);
-                    console.log('error data')
-                } else {
-                    setSearchedBooks(data.map((book) => {
-                        const existingBook = existingBooks.find((b) => b.id === book.id);
-                        if (existingBook) {
-                            book.shelf = existingBook.shelf;
-                        } else {
-                            book.shelf = 'none';
-                        }
-                        return book;
-                    }));
                 }
             });
         } else {
             setSearchedBooks([]);
-            console.log('none input data')
+            console.log('Search query is empty');
         }
-    };
+        return () => {
+            isMounted = false;
+        };
+    }, [query, existingBooks]);
 
     const changeShelf = (book, shelf) => {
         BooksAPI.update(book, shelf).then(() => {
             book.shelf = shelf;
-            setSearchedBooks(searchedBooks.map((b) => (b.id === book.id ? book : b)));
+            setSearchedBooks((prevSearchedBooks) =>
+                prevSearchedBooks.map((b) => (b.id === book.id ? book : b))
+            );
+        }).catch((error) => {
+            console.error('Error updating shelf:', error);
         });
     };
 
@@ -51,7 +62,7 @@ const SearchPage = ({ existingBooks }) => {
                         type="text"
                         placeholder="Search by title, author, or ISBN"
                         value={query}
-                        onChange={(e) => updateQuery(e.target.value)}
+                        onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
             </div>
