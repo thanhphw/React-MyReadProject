@@ -17,12 +17,12 @@ const SearchPage = ({ existingBooks }) => {
                         setSearchedBooks([]);
                         console.error('Search returned no results');
                     } else {
-                        const booksWithShelves = data.map((book) => {
+                        const updatedBooks = data.map((book) => {
                             const existingBook = existingBooks.find((b) => b.id === book.id);
                             book.shelf = existingBook ? existingBook.shelf : 'none';
                             return book;
                         });
-                        setSearchedBooks(booksWithShelves);
+                        setSearchedBooks(updatedBooks);
                     }
                 }
             }).catch((error) => {
@@ -42,9 +42,8 @@ const SearchPage = ({ existingBooks }) => {
 
     const changeShelf = (book, shelf) => {
         BooksAPI.update(book, shelf).then(() => {
-            book.shelf = shelf;
             setSearchedBooks((prevSearchedBooks) =>
-                prevSearchedBooks.map((b) => (b.id === book.id ? book : b))
+                prevSearchedBooks.map((b) => (b.id === book.id ? { ...b, shelf } : b))
             );
         }).catch((error) => {
             console.error('Error updating shelf:', error);
